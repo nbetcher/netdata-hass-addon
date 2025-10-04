@@ -46,6 +46,9 @@ privileged:
   - SYS_ADMIN
   # To allow run.sh create mount points and for smartctl
   - SYS_RAWIO
+  - NET_ADMIN
+  - BPF
+  - PERFMON
 map:
   - addon_config:rw
   # To allow run.sh migrate from home assistant config dir to add-on config
