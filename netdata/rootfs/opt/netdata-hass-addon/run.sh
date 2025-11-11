@@ -104,6 +104,22 @@ if ! mountpoint --quiet /host/etc/os-release; then
   exit 143
 fi
 
+HOST_CHARTS_DIR="/config/netdata-charts.d"
+mkdir -p "${HOST_CHARTS_DIR}"
+
+if [[ -d /usr/libexec/netdata/charts.d && -z "$(ls -A "${HOST_CHARTS_DIR}" 2>/dev/null)" ]]; then
+  cp -a /usr/libexec/netdata/charts.d/. "${HOST_CHARTS_DIR}/" 2>/dev/null || true
+fi
+
+if [[ -f /opt/netdata-hass-addon/container_net.chart.sh ]]; then
+  cp -f /opt/netdata-hass-addon/container_net.chart.sh "${HOST_CHARTS_DIR}/container_net.chart.sh"
+  chmod +x "${HOST_CHARTS_DIR}/container_net.chart.sh"
+fi
+
+if ! mountpoint --quiet /usr/libexec/netdata/charts.d; then
+  mount --bind "${HOST_CHARTS_DIR}" /usr/libexec/netdata/charts.d
+fi
+
 if [[ ! -d /config/netdata && -d /homeassistant/netdata ]]; then
   echo "Migrating Netdata configuration files out of Home Assistant config directory..." >&2
   mv -fv /homeassistant/netdata /config/
@@ -126,6 +142,11 @@ mount --bind /data/netdata-cache /var/cache/netdata
 mkdir -p /data/netdata-lib /var/lib/netdata
 mount --bind /data/netdata-lib /var/lib/netdata
 set +x
+
+CHARTS_CONF="/etc/netdata/charts.d.conf"
+if [[ -f "${CHARTS_CONF}" ]] && ! grep -Eq '^\\s*container_net\\s*=' "${CHARTS_CONF}"; then
+  echo 'container_net="yes"' >> "${CHARTS_CONF}"
+fi
 
 echo "Handling Netdata add-on configuration..." >&2
 get_config hostname
