@@ -16,7 +16,7 @@ CN_TICKS=0
 cn_define_chart() {
     id="$1"
     iface="$2"
-    echo "CHART container_net_${id} '' 'Container Net ${iface}' 'kilobits/s' 'network' 'container.net' stacked"
+    echo "CHART container_net_${id} container_net_${id} 'Container Net ${iface}' 'kilobits/s' 'network' 'container.net' stacked"
     echo "DIMENSION received 'rx' incremental 8 1024"
     echo "DIMENSION sent 'tx' incremental -8 1024"
 }
@@ -60,7 +60,7 @@ container_net_create() {
             if (iface=="lo") next
             id=sanitize(iface)
             printf("CHART %s %s '\''Container Net %s'\'' '\''kilobits/s'\'' '\''network'\'' '\''container.net'\'' stacked\n",
-                   "container_net_" id, "''", iface)
+                   "container_net_" id, "container_net_" id, iface)
             print "DIMENSION received '\''rx'\'' incremental 8 1024"
             print "DIMENSION sent '\''tx'\'' incremental -8 1024"
             printf("#ID %s\n", id)
@@ -68,7 +68,7 @@ container_net_create() {
     ' "$CN_NET_DEV" 2>/dev/null)"
 
     if [ -z "$DATA" ]; then
-        echo "CHART container_net.none '' 'No interfaces found' 'status' 'network' 'container.net' area"
+        echo "CHART container_net.none container_net.none 'No interfaces found' 'status' 'network' 'container.net' area"
         echo "DIMENSION none none absolute 1 1"
         CN_KNOWN_IDS=""
         return 0
@@ -93,7 +93,7 @@ container_net_update() {
     CN_TICKS=$((CN_TICKS + 1))
 
     if [ ! -r "$CN_NET_DEV" ]; then
-        echo "CHART container_net.disabled '' 'container_net disabled' 'status' 'network' 'container.net' area"
+        echo "CHART container_net.disabled container_net.disabled 'container_net disabled' 'status' 'network' 'container.net' area"
         echo "DIMENSION disabled disabled absolute 1 1"
         echo "BEGIN container_net.disabled $us"
         echo "SET disabled = 1"
