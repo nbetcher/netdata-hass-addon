@@ -10,4 +10,6 @@ RUN ["/opt/netdata-hass-addon/prepare_image.sh"]
 
 COPY rootfs /
 
+RUN chmod +x /opt/netdata-hass-addon/run.sh
+
 ENTRYPOINT ["/opt/netdata-hass-addon/run.sh"]
