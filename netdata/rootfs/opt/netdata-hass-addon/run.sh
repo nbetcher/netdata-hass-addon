@@ -6,7 +6,7 @@ source /opt/netdata-hass-addon/common.bash
 docker_sock='/var/run/docker.sock'
 
 # Gets the current/parent container id on the host.
-# Originally taken from https://github.com/felipecrs/docker-on-docker-shim/blob/90185d4391fb8863e1152098f07a95febbe79dba/dond
+# Originally taken from https://github.com/felipecrs/docker-on-docker-shim/blob/68218cd76b7068ca86fc91a3169cebcc5450ae7d/dond
 function set_container_id() {
   local result
 
@@ -28,14 +28,29 @@ function set_container_id() {
 }
 
 # Gets the root directory of the current/parent container on the host filesystem.
-# Originally taken from https://github.com/felipecrs/docker-on-docker-shim/blob/90185d4391fb8863e1152098f07a95febbe79dba/dond
+# Originally taken from https://github.com/felipecrs/docker-on-docker-shim/blob/68218cd76b7068ca86fc91a3169cebcc5450ae7d/dond
 function set_container_root_on_host() {
   local result
 
-  result="$(
-    curl --fail-with-body --silent --show-error --unix-socket "${docker_sock}" "http://localhost/containers/${container_id}/json" |
-      jq --exit-status --raw-output '.GraphDriver.Data.MergedDir'
+  local docker_info
+  docker_info="$(
+    curl --fail-with-body --silent --show-error --unix-socket "${docker_sock}" "http://localhost/info" |
+      jq --exit-status --raw-output '.Driver + "|" + .DockerRootDir'
   )"
+
+  local storage_driver="${docker_info%%"|"*}"
+  local docker_data_dir="${docker_info#*"|"}"
+
+  if [[ "${storage_driver}" == "overlay2" ]]; then
+    result="$(
+      curl --fail-with-body --silent --show-error --unix-socket "${docker_sock}" "http://localhost/containers/${container_id}/json" |
+        jq --exit-status --raw-output '.GraphDriver.Data.MergedDir'
+    )"
+  elif [[ "${storage_driver}" == "overlayfs" ]]; then
+    result="${docker_data_dir}/rootfs/overlayfs/${container_id}"
+  else
+    error "Unsupported storage driver: ${storage_driver}"
+  fi
 
   # Sanity check
   if [[ "${result}" =~ ^(/[^/]+)+$ ]]; then
@@ -124,12 +139,6 @@ if [[ ! -d /config/netdata && -d /homeassistant/netdata ]]; then
   echo "Migrating Netdata configuration files out of Home Assistant config directory..." >&2
   mv -fv /homeassistant/netdata /config/
 fi
-
-# https://github.com/home-assistant/supervisor/issues/3223
-echo "Cleaning up old Netdata images if any..." >&2
-curl --fail-with-body --silent --show-error --unix-socket "${docker_sock}" http://localhost/images/json |
-  jq --raw-output '.[] | select(.RepoTags != null) | select(.RepoTags[] | test("netdata/netdata|ghcr.io/netdata/netdata")) | .Id' |
-  xargs -r -I {} -t -- curl --silent --show-error --unix-socket "${docker_sock}" -X DELETE "http://localhost/images/{}"
 
 echo "Setting up Netdata directories..." >&2
 set -x

@@ -2,24 +2,34 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "dependencyDashboard": true,
+  "enabledManagers": ["github-actions", "custom.regex"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^netdata/Dockerfile$/",
+        "/^netdata/config.yaml$/"
+      ],
+      "matchStrings": [
+        "FROM ghcr.io/netdata/netdata:v(?<currentValue>.+)\\n",
+        "version: (?<currentValue>.+)\\n"
+      ],
+      "datasourceTemplate": "docker",
+      "packageNameTemplate": "ghcr.io/netdata/netdata",
+      "depNameTemplate": "Netdata",
+      "extractVersionTemplate": "^v(?<version>.+)$",
+      "versioningTemplate": "semver"
+    }
+  ],
   "packageRules": [
     {
       "description": "Automerge non-major updates",
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
-    }
-  ],
-  "enabledManagers": ["github-actions", "regex"],
-  "customManagers": [
+    },
     {
-      "customType": "regex",
-      "fileMatch": ["^netdata/Dockerfile$", "^netdata/config.yaml$"],
-      "matchStrings": [
-        "FROM ghcr.io/netdata/netdata:v(?<currentValue>.+)\\n",
-        "version: (?<currentValue>.+)\\n"
-      ],
-      "depNameTemplate": "netdata/netdata",
-      "datasourceTemplate": "github-releases"
+      "matchPackageNames": ["ghcr.io/netdata/netdata"],
+      "minimumGroupSize": 2
     }
   ]
 }

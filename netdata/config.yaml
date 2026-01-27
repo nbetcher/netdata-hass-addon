@@ -1,17 +1,12 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: Netdata
-version: v2.7.3-7
+version: v2.8.5-addon.2-nb0
 slug: netdata
-description:
-  Monitor your servers, containers, and applications, in high-resolution and in
-  real-time
+description: Monitor your servers, containers, and applications, in high-resolution and in real-time
 url: "https://github.com/nbetcher/netdata-hass-addon/tree/master/netdata"
 arch:
-  - armhf
-  - armv7
   - aarch64
   - amd64
-  - i386
 options:
   hostname: homeassistant
   netdata_claim_url: https://app.netdata.cloud
