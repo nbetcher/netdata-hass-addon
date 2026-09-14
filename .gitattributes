@@ -1,0 +1,8 @@
+# This add-on ships Linux shell scripts and Home Assistant YAML that are
+# executed inside a container. A CRLF checkout breaks them at runtime
+# ("env: 'bash\r': No such file or directory"), so pin LF everywhere
+# regardless of the contributor's core.autocrlf setting.
+* text=auto eol=lf
+
+# Never apply line-ending conversion to binary assets.
+*.png binary
